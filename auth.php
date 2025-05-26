@@ -11,3 +11,15 @@ function require_login() {
         exit;
     }
 }
+
+function login($user_id, $username)
+{
+    $_SESSION['user_id'] = $user_id;
+    $_SESSION['username'] = $username;
+}
+
+function logout()
+{
+    session_destroy();
+}
+

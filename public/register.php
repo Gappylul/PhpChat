@@ -1,35 +1,25 @@
 <?php
-require_once __DIR__ . '/../session.php';
+require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../utils.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username']);
+    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
     $stmt = db()->prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-    $stmt->bindValue(1, $_POST['username']);
-    $stmt->bindValue(2, password_hash($_POST['password'], PASSWORD_BCRYPT));
-    try {
-        $stmt->execute();
+    $stmt->bindValue(1, $username);
+    $stmt->bindValue(2, $password);
+    if ($stmt->execute()) {
         header('Location: login.php');
         exit;
-    } catch (Exception $e) {
-        $error = 'Username already exists';
     }
+    $error = 'Username may already be taken.';
 }
 ?>
-
-<form method="POST">
+<form method="post">
     <h2>Register</h2>
-    <?= isset($error) ? "<p class='error'>$error</p>" : '' ?>
-
-    <div class="form-group">
-        <label for="username">Username</label>
-        <input id="username" name="username" required>
-    </div>
-
-    <div class="form-group">
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" required>
-    </div>
-
+    <?= isset($error) ? "<p>$error</p>" : '' ?>
+    <input name="username" required>
+    <input name="password" type="password" required>
     <button>Register</button>
-    <p><a href="login.php">Register</a></p>
+    <p><a href="login.php">Login</a></p>
 </form>
