@@ -1,30 +1,37 @@
 <?php
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../session.php';
+require_once __DIR__ . '/../utils.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
-    $stmt->execute([$username]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user'] = $user;
-        header("Location: index.php");
+    $stmt = db()->prepare('SELECT * FROM users WHERE username = ?');
+    $stmt->bindValue(1, $_POST['username']);
+    $res = $stmt->execute();
+    $user = $res->fetchArray(SQLITE3_ASSOC);
+    if ($user && password_verify($_POST['password'], $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        header('Location: index.php');
         exit;
-    } else {
-        $error = "Invalid credentials.";
     }
+    $error = 'Invalid credentials';
 }
 ?>
 
-<h2>Login</h2>
-<?php if (!empty($error)) echo "<p style='color:red;'>$error</p>"; ?>
-<form method="post">
-    <input name="username" placeholder="Username" required><br>
-    <input name="password" type="password" placeholder="Password" required><br>
+<form method="POST">
+    <h2>Login</h2>
+    <?= isset($error) ? "<p class='error'>$error</p>" : '' ?>
+
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" name="username" required>
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required>
+    </div>
+
     <button>Login</button>
+    <p><a href="register.php">Login</a></p>
 </form>
-<a href="register.php">No account? Register here</a>
+

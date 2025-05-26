@@ -1,37 +1,42 @@
 <?php
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../auth.php';
 require_login();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Simple PHP Chat</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
-        #chat-box { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
-    </style>
-    <script>
-        setInterval(() => {
-            fetch('fetch_messages.php')
-                .then(res => res.text())
-                .then(html => document.getElementById('chat-box').innerHTML = html);
-        }, 2000);
-    </script>
+    <title>Chat</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<h2>Chat Room</h2>
-<p>Welcome, <?= htmlspecialchars(current_user()['username']) ?>! <a href="logout.php">Logout</a></p>
-
-<div id="chat-box"><?php include __DIR__ . '/fetch_messages.php'; ?></div>
-
-<form action="send_message.php" method="post">
-    <input type="text" name="message" placeholder="Your message" required>
-    <button type="submit">Send</button>
+<h2>Welcome, <?= htmlspecialchars($_SESSION['username']) ?> <a href="logout.php">(Logout)</a></h2>
+<div id="chat"></div>
+<form id="chat-form">
+    <input type="text" name="message" id="message" placeholder="Type..." autocomplete="off" required>
+    <button>Send</button>
 </form>
 
+<script>
+    async function fetchMessages() {
+        const res = await fetch('fetch.php');
+        const messages = await res.json();
+        const chat = document.getElementById('chat');
+        chat.innerHTML = messages.map(m => `<p><strong>${m.username}</strong>: ${m.message}</p>`).join('');
+    }
+    setInterval(fetchMessages, 1000);
+    fetchMessages();
+
+    document.getElementById('chat-form').onsubmit = async e => {
+        e.preventDefault();
+        const msg = document.getElementById('message');
+        await fetch('send.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'message=' + encodeURIComponent(msg.value)
+        });
+        msg.value = '';
+    };
+</script>
 </body>
 </html>
